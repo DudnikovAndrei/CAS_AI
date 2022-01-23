@@ -4,7 +4,7 @@ import torch
 from torch import optim
 import matplotlib.pyplot as plt
 
-from SP500_VAE.SP500 import SP500DataSet
+from DataSet.SP500 import SP500DataSet
 from SP500_VAE.VAE_Lightning import VAE
 from VAE_Trainer import Trainer
 

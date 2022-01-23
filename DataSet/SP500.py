@@ -73,6 +73,16 @@ class SP500DataSet():
         df_returns.SPY = [1 if spy > 0 else 0 for spy in df_returns.SPY]
         return df_returns
 
+    def get_train_data(self, nTest):
+        df = self.load_data()
+        df_returns = self.get_returns(df)
+        return df_returns.iloc[: -nTest]
+
+    def get_test_data(self, nTest):
+        df = self.load_data()
+        df_returns = self.get_returns(df)
+        return df_returns.iloc[-nTest:]
+
     def get_rows(self, rows, percent):
         rows = int(percent * rows / 100)
         return rows

@@ -6,6 +6,8 @@ import torchvision.transforms as transforms
 import torchvision.utils as vutils
 
 # Decide which device we want to run on
+from torchvision.datasets.utils import download_and_extract_archive
+
 from Config import Config
 from CreateGenAndDisc import CreateGenAndDisc
 from Plot import Plot
@@ -18,7 +20,7 @@ print("Random Seed: ", manualSeed)
 random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
-# download_and_extract_archive('https://s3-us-west-1.amazonaws.com/udacity-dlnfd/datasets/celeba.zip', '.', './imageA')
+download_and_extract_archive('https://s3-us-west-1.amazonaws.com/udacity-dlnfd/datasets/celeba.zip', '.', './imageA')
 
 # We can use an image folder dataset the way we have it setup.
 # Create the dataset
