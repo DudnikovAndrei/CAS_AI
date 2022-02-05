@@ -4,8 +4,7 @@ import numpy as np
 class QLearningAgent:
     """Q-Learning agent that can act on a continuous state space by discretizing it."""
 
-    def __init__(self, env, state_grid, alpha=0.02, gamma=0.99,
-                 epsilon=1.0, epsilon_decay_rate=0.9995, min_epsilon=.01, seed=505):
+    def __init__(self, env, state_grid, alpha=0.02, gamma=0.99, epsilon=1.0, epsilon_decay_rate=0.9995, min_epsilon=.01, seed=505):
         """Initialize variables, create grid for discretization."""
         # Environment info
         self.env = env
@@ -30,19 +29,19 @@ class QLearningAgent:
 
         print("Q table size:", self.q_table.shape)
 
-    def preprocess_state(self, state):
+    def preprocess_state(self, state, discretization):
         """Map a continuous state to its discretized representation."""
         # TODO: Implement this
-        return tuple(self.discretize(state, self.state_grid))
+        return tuple(discretization.discretize(state, self.state_grid))
 
-    def reset_episode(self, state):
+    def reset_episode(self, state, discretization):
         """Reset variables for a new episode."""
         # Gradually decrease exploration rate
         self.epsilon *= self.epsilon_decay_rate
         self.epsilon = max(self.epsilon, self.min_epsilon)
 
         # Decide initial action
-        self.last_state = self.preprocess_state(state)
+        self.last_state = self.preprocess_state(state, discretization)
         self.last_action = np.argmax(self.q_table[self.last_state])
         return self.last_action
 
@@ -50,9 +49,9 @@ class QLearningAgent:
         """Reset exploration rate used when training."""
         self.epsilon = epsilon if epsilon is not None else self.initial_epsilon
 
-    def act(self, state, reward=None, done=None, mode='train'):
+    def act(self, state, discretization, reward=None, done=None, mode='train'):
         """Pick next action and update internal Q table (when mode != 'test')."""
-        state = self.preprocess_state(state)
+        state = self.preprocess_state(state, discretization)
         if mode == 'test':
             # Test mode: Simply produce an action
             action = np.argmax(self.q_table[state])
@@ -75,21 +74,3 @@ class QLearningAgent:
         self.last_state = state
         self.last_action = action
         return action
-
-    def discretize(self, sample, grid):
-        """Discretize a sample as per given grid.
-
-        Parameters
-        ----------
-        sample : array_like
-            A single sample from the (original) continuous space.
-        grid : list of array_like
-            A list of arrays containing split points for each dimension.
-
-        Returns
-        -------
-        discretized_sample : array_like
-            A sequence of integers with the same number of dimensions as sample.
-        """
-        # TODO: Implement this
-        return list(int(np.digitize(s, g)) for s, g in zip(sample, grid))  # apply along each dimension

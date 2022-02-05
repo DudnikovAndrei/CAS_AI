@@ -23,13 +23,13 @@ class Environment():
     def show_environment(self):
         self.env.reset()
         img = plt.imshow(self.env.render(mode='rgb_array'))
-        for t in range(1000):
+        for t in range(100):
             action = self.env.action_space.sample()
             img.set_data(self.env.render(mode='rgb_array'))
             plt.axis('off')
             display.clear_output(wait=True)
             state, reward, done, _ = self.env.step(action)
-            if done:
+            if done & t > 100:
                 print('Score: ', t + 1)
                 break
 
