@@ -166,7 +166,7 @@ def mc_control(env, num_episodes, alpha, gamma=1.0, eps_start=1.0, eps_decay=.99
     return policy, Q
 
 
-policy, Q = mc_control(env, 500000, 0.02)
+policy, Q = mc_control(env, 100000, 0.02)
 
 
 # obtain the corresponding state-value function
