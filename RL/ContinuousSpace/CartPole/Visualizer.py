@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.collections as mc
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 from IPython import display
 
@@ -90,6 +91,7 @@ class Visualizer():
             display.clear_output(wait=True)
             state, reward, done, _ = env.step(action)
             score += reward
+            time.sleep(0.2)
             if done:
                 print('Score: ', score)
                 break

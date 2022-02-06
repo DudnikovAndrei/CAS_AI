@@ -79,8 +79,6 @@ rolling_mean = visualizer.plot_scores(scores)
 visualizer.visualize_agent(env, q_agent, discretization)
 
 # Run in test mode and analyze scores obtained
-test_scores = runner.run(q_agent, env, num_episodes=100, mode='test')
+test_scores = runner.run(q_agent, env, discretization, num_episodes=100, mode='test')
 print("[TEST] Completed {} episodes with avg. score = {}".format(len(test_scores), np.mean(test_scores)))
 _ = visualizer.plot_scores(test_scores, rolling_window=10)
-
-test =1
