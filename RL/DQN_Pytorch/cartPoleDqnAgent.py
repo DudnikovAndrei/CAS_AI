@@ -1,41 +1,43 @@
 import collections
 import os
 import random
+from pathlib import Path
+from typing import Deque
+
 import gym
 import numpy as np
 
-import torch
-from typing import Deque
 from cartPoleDqn import DQN
 
-PROJECT_PATH = os.path.abspath("/home/andrei/PycharmProjects/CAS_AI/RL/DQN")
-MODELS_PATH = os.path.join(PROJECT_PATH, "models")
-MODEL_PATH = os.path.join(MODELS_PATH, "dqn_cartpole.h5")
-TARGET_MODEL_PATH = os.path.join(MODELS_PATH, "target_dqn_cartpole.h5")
+PROJECT_PATH = Path.cwd()
+MODELS_PATH = PROJECT_PATH.joinpath("models")
+MODEL_PATH = MODELS_PATH.joinpath("dqn_cartpole.h5")
+TARGET_MODEL_PATH = MODELS_PATH.joinpath("target_dqn_cartpole.h5")
+
 
 class Agent:
     def __init__(self, env: gym.Env):
         # DQN Env Variables
         self.env = env
-        self.observations = self.env.observation_space.shape    # observation shapes
-        self.actions = self.env.action_space.n                  # number of actions
+        self.observations = self.env.observation_space.shape
+        self.actions = self.env.action_space.n
         # DQN Agent Variables
-        self.replay_buffer_size = 50_000            # buffer size                                   (Hyperparameter)
-        self.train_start = 1_000                    # Nach so vielen observations wird gestartet    (Hyperparameter)
-        self.memory: Deque = collections.deque(     # memory queue
+        self.replay_buffer_size = 50_000
+        self.train_start = 1_000
+        self.memory: Deque = collections.deque(
             maxlen=self.replay_buffer_size
         )
-        self.gamma = 0.95                           # discount factor
-        self.epsilon = 1.0                          # epsilon start value
-        self.epsilon_min = 0.01                     # epsilon end value
-        self.epsilon_decay = 0.995                  # epsilon decay rate (kann auch 0.999 sein)
+        self.gamma = 0.95
+        self.epsilon = 1.0
+        self.epsilon_min = 0.01
+        self.epsilon_decay = 0.995
         # DQN Network Variables
         self.state_shape = self.observations
-        self.learning_rate = 1e-3                   # learning rate
+        self.learning_rate = 1e-3
         self.dqn = DQN(
-            self.state_shape,                       # input states
-            self.actions,                           # output actions
-            self.learning_rate                      # learning rate
+            self.state_shape,
+            self.actions,
+            self.learning_rate
         )
         self.target_dqn = DQN(
             self.state_shape,
@@ -48,17 +50,16 @@ class Agent:
         if np.random.rand() <= self.epsilon:
             return np.random.randint(self.actions)
         else:
-            return np.argmax(self.dqn(state).detach().numpy() )
+            return np.argmax(self.dqn(state))
 
     def train(self, num_episodes: int):
-        last_rewards: Deque = collections.deque(maxlen=5)                           # 5 last rewards für Überwachung
+        last_rewards: Deque = collections.deque(maxlen=5)
         best_reward_mean = 0.0
 
         for episode in range(1, num_episodes + 1):
             total_reward = 0.0
-            state =  self.env.reset()
+            state = self.env.reset()
             state = np.reshape(state, newshape=(1, -1)).astype(np.float32)
-            state = torch.tensor(state)
 
             while True:
                 action = self.get_action(state)
@@ -96,7 +97,6 @@ class Agent:
 
     def replay(self):
         if len(self.memory) < self.train_start:
-            self.epsilon = 1.0 # do not decrease epsilon
             return
 
         minibatch = random.sample(self.memory, self.batch_size)
@@ -106,7 +106,7 @@ class Agent:
         states_next = np.concatenate(states_next).astype(np.float32)
 
         q_values = self.dqn(states)
-        q_values_next = self.target_dqn(states_next)  # forward()
+        q_values_next = self.target_dqn(states_next)
 
         for i in range(self.batch_size):
             a = actions[i]
@@ -114,8 +114,7 @@ class Agent:
             if done:
                 q_values[i][a] = rewards[i]
             else:
-                # q_values[i][a] = rewards[i] + self.gamma * np.max(q_values_next[i])
-                q_values[i][a] = rewards[i] + self.gamma * max(q_values_next[i])
+                q_values[i][a] = rewards[i] + self.gamma * np.max(q_values_next[i])
 
         self.dqn.fit(states, q_values)
 
@@ -147,4 +146,4 @@ if __name__ == "__main__":
     agent = Agent(env)
     agent.train(num_episodes=250)
     input("Play?")
-    agent.play(num_episodes=50, render=True)
+    agent.play(num_episodes=20, render=True)
