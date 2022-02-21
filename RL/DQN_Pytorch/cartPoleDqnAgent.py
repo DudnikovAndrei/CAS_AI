@@ -44,7 +44,7 @@ class Agent:
             self.actions,
             self.learning_rate
         )
-        self.batch_size = 32
+        self.batch_size = 24
 
     def get_action(self, state: np.ndarray):
         if np.random.rand() <= self.epsilon:

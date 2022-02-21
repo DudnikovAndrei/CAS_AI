@@ -9,7 +9,7 @@ class TorchModel(nn.Module):
     _n_actions: int
     _hidden_size: int
 
-    def __init__(self, n_states: int, n_actions: int, hidden_size: int = 24):
+    def __init__(self, n_states: int, n_actions: int, hidden_size: int = 36):
         super().__init__()
         self._n_states = n_states
         self._n_actions = n_actions

@@ -13,7 +13,6 @@ from torch.utils.tensorboard import SummaryWriter
 from experience import Experience, experiences_to_numpy
 from model_repository import ModelRepository
 
-
 class Agent:
     def __init__(self, env: gym.Env,
                  model: nn.Module,
@@ -41,12 +40,12 @@ class Agent:
         if len(self.memory) < self.min_memory_size:
             raise ValueError("not enough samples in memory, please fill memory first")
 
-        self.gamma = 0.95
+        self.gamma = 0.8 # 0.8
         self.epsilon = 1.0
-        self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995
+        self.epsilon_min = 0.5 # 0.01
+        self.epsilon_decay = 0.95 # 0.9
 
-        self.batch_size = 32
+        self.batch_size = 48
         self._global_step = 0
 
     def get_action(self, state: np.ndarray):
@@ -56,7 +55,7 @@ class Agent:
             return np.argmax(self.model(state).detach().numpy())
 
     def train(self, n_episodes: int):
-        last_rewards: Deque = collections.deque(maxlen=5)
+        last_rewards: Deque = collections.deque(maxlen=4)
         best_reward_mean = 0.0
 
         for episode in range(1, n_episodes + 1):
@@ -71,7 +70,7 @@ class Agent:
                 current_time_step_in_environment += 1
 
                 if done and current_time_step_in_environment < 499:
-                    reward = -100.0
+                    reward = -50.0
 
                 experience = Experience(state=state, action=action, reward=reward, next_state=next_state, done=done)
 

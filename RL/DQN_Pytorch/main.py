@@ -47,10 +47,10 @@ def main():
 
         optimizer = Adam(params=model.parameters(), lr=learning_rate)
 
-        memory: Deque[Experience] = collections.deque(maxlen=100_000)
+        memory: Deque[Experience] = collections.deque(maxlen=100_000) # 100_000
 
         experience_generator = ExperienceGenerator(env=env)
-        experience = experience_generator.get_experience(number=1000)
+        experience = experience_generator.get_experience(number=10000)
 
         memory.extend(experience)
 
@@ -69,7 +69,7 @@ def main():
                       model_repository=model_repository,
                       summary_writer=summary_writer)
 
-        agent.train(n_episodes=250)
+        agent.train(n_episodes=1000)
         input("Play?")
         agent.play(num_episodes=20, render=True)
 
