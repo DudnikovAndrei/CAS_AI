@@ -1,19 +1,9 @@
 from tqdm import tqdm
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.distributions import Categorical
-
-import numpy as np
-import gym
-import random
-import time
 
 from model import BranchingQNetwork
-from utils import TensorEnv, ExperienceReplayMemory, AgentConfig, BranchingTensorEnv
+from utils import BranchingTensorEnv
 import utils
-
 
 def run():
     args = utils.arguments()
@@ -27,7 +17,6 @@ def run():
     print(agent)
 
     for ep in tqdm(range(10)):
-
         s = env.reset()
         done = False
         ep_reward = 0
@@ -35,7 +24,6 @@ def run():
             with torch.no_grad(): # kein training gerade, nur abruf vom ergebnis
                 out = agent(s).squeeze(0)
             action = torch.argmax(out, dim=1).numpy().reshape(-1)
-            #print(action)
             s, r, done, _ = env.step(action)
 
             env.render()
@@ -44,7 +32,6 @@ def run():
         print('Ep reward: {:.3f}'.format(ep_reward))
 
     env.close()
-
 
 if __name__ == "__main__":
     run()

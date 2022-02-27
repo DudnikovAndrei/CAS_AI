@@ -10,17 +10,13 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 from scipy.ndimage.filters import gaussian_filter1d
 
-
-def arguments(): 
-
+def arguments():
     parser = ArgumentParser()
-    parser.add_argument('--env', default = 'BipedalWalker-v3') #LunarLanderContinuous-v2
+    parser.add_argument('--env', default = 'LunarLanderContinuous-v2') #LunarLanderContinuous-v2
 
     return parser.parse_args()
 
-
-def save(agent, rewards, args): 
-
+def save(agent, rewards, args):
     path = './runs/{}/'.format(args.env)
     try: 
         os.makedirs(path)
@@ -39,12 +35,7 @@ def save(agent, rewards, args):
 
     pd.DataFrame(rewards, columns = ['Reward']).to_csv(os.path.join(path, 'rewards.csv'), index = False)
 
-
-
-
-
 class AgentConfig:
-
     def __init__(self, 
                  epsilon_start = 1.,
                  epsilon_final = 0.01,
@@ -55,7 +46,7 @@ class AgentConfig:
                  memory_size = 100000, 
                  batch_size = 128, 
                  learning_starts = 5000,
-                 max_frames = 10_000_000):
+                 max_frames = 500_000): # old 10_000_000
 
         self.epsilon_start = epsilon_start
         self.epsilon_final = epsilon_final
@@ -72,7 +63,6 @@ class AgentConfig:
         self.learning_starts = learning_starts
         self.max_frames = max_frames
 
-
 class ExperienceReplayMemory:
     def __init__(self, capacity):
         self.capacity = capacity
@@ -84,7 +74,6 @@ class ExperienceReplayMemory:
             del self.memory[0]
 
     def sample(self, batch_size):
-        
         batch = random.sample(self.memory, batch_size)
         states = []
         actions = []
@@ -99,44 +88,32 @@ class ExperienceReplayMemory:
             next_states.append(b[3])
             dones.append(b[4])
 
-
         return states, actions, rewards, next_states, dones
 
     def __len__(self):
         return len(self.memory)
 
-
-class TensorEnv(gym.Wrapper): 
-
-    def __init__(self, env_name): 
-
+class TensorEnv(gym.Wrapper):
+    def __init__(self, env_name):
         super().__init__(gym.make(env_name))
 
-    def process(self, x): 
-
+    def process(self, x):
         return torch.tensor(x).reshape(1,-1).float()
 
-    def reset(self): 
-
+    def reset(self):
         return self.process(super().reset())
 
-    def step(self, a): 
-
+    def step(self, a):
         ns, r, done, infos = super().step(a)
         return self.process(ns), r, done, infos 
 
-
-class BranchingTensorEnv(TensorEnv): 
-
-    def __init__(self, env_name, n): 
-
+class BranchingTensorEnv(TensorEnv):
+    def __init__(self, env_name, n):
         super().__init__(env_name)
         self.n = n 
         self.discretized = np.linspace(-1.,1., self.n)
 
-
     def step(self, a):
         # in a stehen die indizes per action (2,1,3...)
         action = np.array([self.discretized[aa] for aa in a])
-
         return super().step(action)

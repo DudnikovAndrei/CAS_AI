@@ -5,9 +5,7 @@ import torch
 
 from dataset import MyDataset
 
-
 class MyEnv(gym.Env):
-
     def __init__(self, df):
         self.df = df
         self.current_idx = 0
@@ -39,7 +37,6 @@ class MyEnv(gym.Env):
         next_state = self.states[self.current_idx].reshape(1, -1)
         next_state = torch.tensor(next_state).float()
         return next_state
-
 
     def step(self, action):
 
@@ -74,7 +71,6 @@ class MyEnv(gym.Env):
         self.current_idx += 1
 
         if not done:
-
             if action is None:
                 raise Exception("NaNs detected!")
             next_state = self.states[self.current_idx]
@@ -87,7 +83,6 @@ class MyEnv(gym.Env):
             next_state = None # TODO das abfangen, wen man trainiert, done wird dabei true sein
 
         return next_state, reward, done
-
 
 if __name__ == "__main__":
     dataset = MyDataset()

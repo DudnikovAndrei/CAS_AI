@@ -3,23 +3,18 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.distributions import Categorical
 
 import numpy as np
-import gym
-import random
 
-from model import DuelingNetwork, BranchingQNetwork
-from utils import TensorEnv, ExperienceReplayMemory, AgentConfig, BranchingTensorEnv
+from model import BranchingQNetwork
+from utils import ExperienceReplayMemory, AgentConfig, BranchingTensorEnv
 import utils
 
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 class BranchingDQN(nn.Module):
-
     def __init__(self, obs, ac, n, config):
-
         super().__init__()
 
         self.q = BranchingQNetwork(obs, ac, n)
@@ -31,7 +26,6 @@ class BranchingDQN(nn.Module):
         self.update_counter = 0
 
     def get_action(self, x):
-
         with torch.no_grad():
             # a = self.q(x).max(1)[1]
             out = self.q(x).squeeze(0)
@@ -39,7 +33,6 @@ class BranchingDQN(nn.Module):
         return action.numpy()
 
     def update_policy(self, adam, memory, params):
-
         b_states, b_actions, b_rewards, b_next_states, b_masks = memory.sample(params.batch_size)
 
         states = torch.tensor(b_states).float()
@@ -55,26 +48,17 @@ class BranchingDQN(nn.Module):
             rewards = rewards.to('cuda')
             masks = masks.to('cuda')
 
-
         qvals = self.q(states)
-
         current_q_values = self.q(states).gather(2, actions).squeeze(-1)
 
         with torch.no_grad():
-
             argmax = torch.argmax(self.q(next_states), dim=2)
 
             max_next_q_vals = self.target(next_states).gather(2, argmax.unsqueeze(2)).squeeze(-1)
             max_next_q_vals = max_next_q_vals.mean(1, keepdim=True)
 
         expected_q_vals = rewards + max_next_q_vals * 0.99 * masks # Belmann
-        # print(expected_q_vals[:5])
         loss = F.mse_loss(expected_q_vals, current_q_values)
-
-        # input(loss)
-
-        # print('\n'*5)
-
         adam.zero_grad()
         loss.backward()
 
@@ -86,7 +70,6 @@ class BranchingDQN(nn.Module):
         if self.update_counter % self.target_net_update_freq == 0:
             self.update_counter = 0
             self.target.load_state_dict(self.q.state_dict())
-
 
 def train():
     args = utils.arguments()
@@ -105,7 +88,6 @@ def train():
 
     p_bar = tqdm(total=config.max_frames)
     for frame in range(config.max_frames):
-
         epsilon = config.epsilon_by_frame(frame)
 
         if np.random.random() > epsilon:
@@ -124,7 +106,6 @@ def train():
 
         memory.push((s.reshape(-1).numpy().tolist(), action, r, ns.reshape(-1).numpy().tolist(), 0. if done else 1.))
         s = ns
-
         p_bar.update(1)
 
         if frame > config.learning_starts:
@@ -134,7 +115,6 @@ def train():
             utils.save(agent, recap, args)
 
     p_bar.close()
-
 
 if __name__ == "__main__":
     train()
