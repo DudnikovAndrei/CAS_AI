@@ -46,7 +46,7 @@ class AgentConfig:
                  memory_size = 100000, 
                  batch_size = 128, 
                  learning_starts = 5000,
-                 max_frames = 500_000): # old 10_000_000
+                 max_frames = 1_500_000): # old 10_000_000
 
         self.epsilon_start = epsilon_start
         self.epsilon_final = epsilon_final
