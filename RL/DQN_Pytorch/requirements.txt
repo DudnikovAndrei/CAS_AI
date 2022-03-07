@@ -1,4 +1,0 @@
-numpy
-tensorflow
-gym
-pyglet
