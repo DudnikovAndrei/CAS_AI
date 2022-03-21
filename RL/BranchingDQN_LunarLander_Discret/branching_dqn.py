@@ -14,7 +14,7 @@ import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 class BranchingDQN(nn.Module):
-    def __init__(self, obs, ac, config):
+    def __init__(self, obs, ac, config, seed):
         super().__init__()
 
         self.q = DuelingNetwork(obs, ac)
@@ -32,7 +32,7 @@ class BranchingDQN(nn.Module):
             action = torch.argmax(out)
         return action.item()
 
-    def update_policy(self, adam, memory, params):
+def update_policy(self, adam, memory, params):
         b_states, b_actions, b_rewards, b_next_states, b_masks = memory.sample(params.batch_size)
 
         states = torch.tensor(b_states).float()
@@ -41,19 +41,10 @@ class BranchingDQN(nn.Module):
         next_states = torch.tensor(b_next_states).float()
         masks = torch.tensor(b_masks).float().reshape(-1, 1)
 
-        if torch.cuda.is_available():
-            states = states.to('cuda')
-            actions = actions.to('cuda')
-            next_states = next_states.to('cuda')
-            rewards = rewards.to('cuda')
-            masks = masks.to('cuda')
-
-        qvals = self.q(states)
         current_q_values = self.q(states).gather(1, actions).squeeze(-1)
 
         with torch.no_grad():
             argmax = torch.argmax(self.q(next_states), dim=1)
-
             max_next_q_vals = self.target(next_states).gather(1, argmax.unsqueeze(1))
             max_next_q_vals = max_next_q_vals.mean(1, keepdim=True)
 
@@ -61,9 +52,6 @@ class BranchingDQN(nn.Module):
         loss = F.mse_loss(expected_q_vals, current_q_values)
         adam.zero_grad()
         loss.backward()
-
-        for p in self.q.parameters():
-            p.grad.data.clamp_(-1., 1.)
         adam.step()
 
         self.update_counter += 1

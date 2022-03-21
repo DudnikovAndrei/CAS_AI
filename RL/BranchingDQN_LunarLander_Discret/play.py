@@ -7,8 +7,6 @@ import utils
 
 def run():
     args = utils.arguments()
-
-    bins = 6
     env = BranchingTensorEnv(args.env)
 
     agent = DuelingNetwork(env.observation_space.shape[0], env.action_space.n)
@@ -23,7 +21,7 @@ def run():
         while not done:
             with torch.no_grad(): # kein training gerade, nur abruf vom ergebnis
                 out = agent(s).squeeze(0)
-            action = torch.argmax(out, dim=1).numpy().reshape(-1)
+            action = torch.argmax(out, dim=0).numpy()
             s, r, done, _ = env.step(action)
 
             env.render()

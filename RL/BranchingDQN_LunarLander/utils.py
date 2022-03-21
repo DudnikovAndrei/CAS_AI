@@ -112,6 +112,7 @@ class BranchingTensorEnv(TensorEnv):
         super().__init__(env_name)
         self.n = n 
         self.discretized = np.linspace(-1.,1., self.n)
+        # self.discretized = np.linspace(min(self.action_space.low), max(self.action_space.high), self.n)
 
     def step(self, a):
         # in a stehen die indizes per action (2,1,3...)

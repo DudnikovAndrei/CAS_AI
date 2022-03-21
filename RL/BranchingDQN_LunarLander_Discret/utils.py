@@ -1,4 +1,6 @@
-import numpy as np 
+from collections import namedtuple, deque
+
+import numpy as np
 import gym 
 import torch 
 import random
@@ -23,7 +25,7 @@ def save(agent, rewards, args):
     except: 
         pass 
 
-    torch.save(agent.q.state_dict(), os.path.join(path, 'model_state_dict'))
+    torch.save(agent.q_local.state_dict(), os.path.join(path, 'model_state_dict'))
 
     plt.cla()
     plt.plot(rewards, c = 'r', alpha = 0.3)
@@ -36,17 +38,19 @@ def save(agent, rewards, args):
     pd.DataFrame(rewards, columns = ['Reward']).to_csv(os.path.join(path, 'rewards.csv'), index = False)
 
 class AgentConfig:
-    def __init__(self, 
+    def __init__(self,
                  epsilon_start = 1.,
                  epsilon_final = 0.01,
-                 epsilon_decay = 8000,
+                 epsilon_decay = 0.995, # 0.99
                  gamma = 0.99, 
-                 lr = 1e-4, 
-                 target_net_update_freq = 1000, 
+                 lr = 5e-4,
+                 tau =1e-3,
+                 target_net_update_freq = 300,
                  memory_size = 100000, 
-                 batch_size = 128, 
+                 batch_size = 128,
+                 update_every=4,
                  learning_starts = 5000,
-                 max_frames = 100_000): # old 10_000_000
+                 max_frames = 500_000): # old 10_000_000
 
         self.epsilon_start = epsilon_start
         self.epsilon_final = epsilon_final
@@ -56,24 +60,41 @@ class AgentConfig:
         self.gamma =gamma
         self.lr =lr
 
+        self.tau = tau
         self.target_net_update_freq =target_net_update_freq
         self.memory_size =memory_size
         self.batch_size =batch_size
+        self.update_every = update_every
 
         self.learning_starts = learning_starts
         self.max_frames = max_frames
 
 class ExperienceReplayMemory:
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = []
+    def __init__(self, action_size, buffer_size, batch_size):
+        self.action_size = action_size
+        self.memory = deque(maxlen=buffer_size)
+        self.batch_size = batch_size
+        self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
 
-    def push(self, transition):
-        self.memory.append(transition)
+    def push(self, state, action, reward, next_state, done):
+        e = self.experience(state, action, reward, next_state, done)
+        self.memory.append(e)
+
+        """self.memory.append(transition)
         if len(self.memory) > self.capacity:
-            del self.memory[0]
+            del self.memory[0]"""
 
-    def sample(self, batch_size):
+    def sample(self):
+        experiences = random.sample(self.memory, k=64)
+
+        states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float()
+        actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).long()
+        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float()
+        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float()
+        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float()
+
+        return (states, actions, rewards, next_states, dones)
+        """
         batch = random.sample(self.memory, batch_size)
         states = []
         actions = []
@@ -88,7 +109,7 @@ class ExperienceReplayMemory:
             next_states.append(b[3])
             dones.append(b[4])
 
-        return states, actions, rewards, next_states, dones
+        return states, actions, rewards, next_states, dones"""
 
     def __len__(self):
         return len(self.memory)
@@ -121,14 +142,3 @@ class BranchingTensorEnv(gym.Wrapper):
     def step(self, a):
         ns, r, done, infos = super().step(a)
         return self.process(ns), r, done, infos
-
-# class BranchingTensorEnv(TensorEnv):
-#     def __init__(self, env_name, n):
-#         super().__init__(env_name)
-#         self.n = n
-#         self.discretized = np.linspace(-1.,1., self.n)
-#
-#     def step(self, a):
-#         # in a stehen die indizes per action (2,1,3...)
-#         action = np.array([self.discretized[aa] for aa in a])
-#         return super().step(action)
